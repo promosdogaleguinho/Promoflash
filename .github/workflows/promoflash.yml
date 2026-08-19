@@ -1,0 +1,98 @@
+name: PromoFlash Worker
+
+on:
+  schedule:
+    # 3x ao dia em horario de Brasilia (UTC-3): 08:00, 13:00 e 19:00.
+    # GitHub Actions usa UTC: 11:00, 16:00 e 22:00 UTC.
+    - cron: "0 11,16,22 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: promoflash-worker
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: production
+      RUN_MODE: once
+      TELEGRAM_DRY_RUN: "false"
+      DATA_DIR: data
+      CONFIG_DIR: config
+      REPOST_WINDOW_HOURS: "24"
+      ALIEXPRESS_API_ENDPOINT: https://api-sg.aliexpress.com/sync
+      ALIEXPRESS_SIGN_METHOD: hmac
+      ALIEXPRESS_TARGET_CURRENCY: BRL
+      ALIEXPRESS_TARGET_LANGUAGE: PT
+      ALIEXPRESS_SHIP_TO_COUNTRY: BR
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      ALIEXPRESS_APP_KEY: ${{ secrets.ALIEXPRESS_APP_KEY }}
+      ALIEXPRESS_APP_SECRET: ${{ secrets.ALIEXPRESS_APP_SECRET }}
+      ALIEXPRESS_TRACKING_ID: ${{ secrets.ALIEXPRESS_TRACKING_ID }}
+      SHOPEE_APP_ID: ${{ secrets.SHOPEE_APP_ID }}
+      SHOPEE_APP_SECRET: ${{ secrets.SHOPEE_APP_SECRET }}
+      AWIN_OAUTH2_TOKEN: ${{ secrets.AWIN_OAUTH2_TOKEN }}
+      AWIN_PUBLISHER_ID: ${{ secrets.AWIN_PUBLISHER_ID }}
+      AWIN_PRODUCT_FEED_URL: ${{ secrets.AWIN_PRODUCT_FEED_URL }}
+      AWIN_FEED_LOCALE: pt_BR
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      # Depois do concurrency wait, o GITHUB_SHA do schedule pode estar
+      # atrasado em relacao ao historico commitado pelo job anterior.
+      # Sem este sync, o antirrepost 24h "esquece" envios recentes.
+      - name: Sincronizar main atualizada
+        run: |
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Instalar dependencias
+        run: pip install --no-cache-dir -r requirements.txt
+
+      - name: Rodar bot (uma execucao)
+        run: python -m app.main
+
+      - name: Persistir historico de envios
+        run: |
+          set +e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/sent_*.json || true
+          git add -u -- data/sent_promotions.json data/sent_promotions.json.migrated || true
+          if git diff --cached --quiet; then
+            echo "Sem alteracoes no historico."
+            exit 0
+          fi
+          git commit -m "chore: atualiza historico de envios [skip ci]"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            # Merge preferindo o historico deste job (evita conflito eterno em JSON).
+            if git pull --no-rebase -X ours origin main; then
+              if git push origin HEAD:main; then
+                echo "Historico persistido com sucesso."
+                exit 0
+              fi
+            else
+              echo "Merge falhou (tentativa ${attempt}); abortando..."
+              git merge --abort 2>/dev/null || true
+              git rebase --abort 2>/dev/null || true
+            fi
+            echo "Push/merge falhou (tentativa ${attempt}); retry..."
+            sleep 5
+          done
+          echo "Falha ao persistir historico apos 3 tentativas."
+          exit 1

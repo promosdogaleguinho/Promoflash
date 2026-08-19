@@ -1,0 +1,51 @@
+{
+  "telegram": {
+    "enabled": true,
+    "destinations": {
+      "geral": {
+        "chat_id": "-1004411059070",
+        "enabled": true
+      },
+      "eletronicos": {
+        "chat_id": "-1004465201988",
+        "enabled": true
+      },
+      "casa": {
+        "chat_id": "-1004498736684",
+        "enabled": true
+      },
+      "moda": {
+        "chat_id": "-1004330976091",
+        "enabled": true
+      },
+      "beleza": {
+        "chat_id": "-1004336915524",
+        "enabled": true
+      },
+      "esportes": {
+        "chat_id": "-1004355857110",
+        "enabled": true
+      },
+      "games": {
+        "chat_id": "-1004471163689",
+        "enabled": true
+      },
+      "veiculos": {
+        "chat_id": "-5438209608",
+        "enabled": true
+      },
+      "alimentos": {
+        "chat_id": "-5038614792",
+        "enabled": true
+      },
+      "cupons": {
+        "chat_id": "-5197872866",
+        "enabled": true
+      }
+    }
+  },
+  "whatsapp": {
+    "enabled": false,
+    "destinations": {}
+  }
+}
