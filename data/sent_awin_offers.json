@@ -1,28 +1,6 @@
 {
   "sent_awin_offers": [
     {
-      "offer_destination_key": "awin:17729:4072895:cupons",
-      "source": "awin",
-      "advertiser_id": "17729",
-      "external_id": "4072895",
-      "destination": "cupons",
-      "kind": "voucher",
-      "title": "10% OFF em itens selecionados com o cupom KORUJAO",
-      "content_fingerprint": "09933e17775ca42e35eaf11d9b6726005b80ee84d620729ce44e1619df298db6",
-      "published_at": "2026-08-20T08:20:17.636021-03:00"
-    },
-    {
-      "offer_destination_key": "awin:17729:4072895:geral",
-      "source": "awin",
-      "advertiser_id": "17729",
-      "external_id": "4072895",
-      "destination": "geral",
-      "kind": "voucher",
-      "title": "10% OFF em itens selecionados com o cupom KORUJAO",
-      "content_fingerprint": "09933e17775ca42e35eaf11d9b6726005b80ee84d620729ce44e1619df298db6",
-      "published_at": "2026-08-20T08:20:17.636021-03:00"
-    },
-    {
       "offer_destination_key": "awin:17729:4074907:games",
       "source": "awin",
       "advertiser_id": "17729",
